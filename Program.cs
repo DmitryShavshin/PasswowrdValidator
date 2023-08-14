@@ -1,41 +1,72 @@
 ﻿using System.Text.RegularExpressions;
 
 string filePath = "Passwords.txt";
-int successCount = 0;
+int conditionMatches = 0;
 
 try
 {
-    //string[] rows = File.ReadAllText(filePath).Split(new[] { Environment.NewLine + Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
     string[] rows = File.ReadAllLines(filePath);
     
 
     foreach (string row in rows)
     {
-        if (IsConditionMet(row))
+        
+        string[] parts = row.Split(':');
+        if (parts.Length == 2)
         {
-            successCount++;
-            Console.WriteLine("Condition met for row:");
-            Console.WriteLine(row);
-            Console.WriteLine("------------------------");
-           
+            string condition = parts[0].Trim();
+            string password = parts[1].Trim();
+            
+            //  Console.WriteLine(ParseCondition(condition, password) 
+            //     ? $"Password '{password}' meets the condition '{condition}'." 
+            //     : $"Password '{password}' does not meet the condition '{condition}'.");
+            
+            if (ParseCondition(condition, password))
+            {
+                Console.WriteLine($"Password '{password}' meets the condition '{condition}'.");
+                ++conditionMatches;   
+            }
+            else
+            {
+                Console.WriteLine($"Password '{password}' does not meet the condition '{condition}'.");
+            }
+            
         }
     }
-
-    Console.WriteLine($"Total rows that meet the condition: {successCount}");
+        Console.WriteLine($"\nPasswords meets the condition '{conditionMatches}' times");
     
 }
 catch (Exception ex)
 {
     Console.WriteLine($"An error occurred: {ex.Message}");
 }
-    
-static bool IsConditionMet(string input)
-{
-    int countA = Regex.Matches(input, "a").Count;
-    int countZ = Regex.Matches(input, "z").Count;
-    int countB = Regex.Matches(input, "b").Count;
 
-    return countA >= 1 && countA <= 5 ||
-           countZ >= 2 && countZ <= 4 ||
-           countB >= 3 && countB <= 6;
+    
+static bool ParseCondition(string condition, string password)
+{
+    string[] conditionParts = condition.Split(' ');
+
+    if (conditionParts.Length != 2)
+    {
+        return false; 
+    }
+
+    char requiredCharacter = conditionParts[0][0];
+
+    string[] rangeParts = conditionParts[1].Split('-');
+    if (rangeParts.Length != 2 || !int.TryParse(rangeParts[0], out int minCount) || !int.TryParse(rangeParts[1], out int maxCount))
+    {
+        return false; 
+    }
+
+    int characterCount = 0;
+    foreach (char c in password)
+    {
+        if (c == requiredCharacter)
+        {
+            characterCount++;
+        }
+    }
+
+    return characterCount >= minCount && characterCount <= maxCount;
 }
